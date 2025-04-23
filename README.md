@@ -10,6 +10,7 @@
 - Peripherals used: UART, QSPI, I2C, SPI...
 - RTOS: CMSIS-RTOS v2 (FreeRTOS backend)
 
+
 ---
 
 ## 🔧 Build Instructions (Linux & Windows)
@@ -21,3 +22,36 @@ This project uses CMake + Ninja and the **Arm GNU Toolchain**.
 ```bash
 git clone https://github.com/ElectronicsBuilder/AidleyController.git
 cd AidleyController
+
+🐧 Linux Setup
+
+# Install build tools and ARM toolchain
+sudo apt update
+sudo apt install cmake ninja-build gcc-arm-none-eabi gdb-arm-none-eabi
+
+# Configure & Build
+cmake -B build -G Ninja
+cmake --build build
+
+
+
+
+
+
+🪟 Windows Setup (STM32CubeCLT)
+
+    Install STM32CubeCLT
+
+    Add CMake + Ninja to PATH from STM32CubeCLT
+
+    Open CMD or PowerShell
+
+cd path\to\AidleyController
+
+# Configure & Build
+cmake -B build -G Ninja
+cmake --build build
+
+
+✅ Output ELF: build/AidleyController.elf
+
