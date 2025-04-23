@@ -67,6 +67,7 @@ void main_cpp(void)
  void heartbeatTask(void *argument)
 { 
     HAL_GPIO_WritePin(LED_ERROR_GPIO_Port, LED_ERROR_Pin, GPIO_PIN_SET);// clear Error LED
+    
     for (;;)
     {
         HAL_GPIO_TogglePin(GPIOG, LED_HB_Pin); // Blink LED

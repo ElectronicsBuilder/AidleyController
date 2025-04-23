@@ -1,7 +1,7 @@
 #include "uart.hpp"
 #include "stm32f7xx_hal.h"
 #include "string.h"
-
+#include "main.h"
 extern UART_HandleTypeDef huart1;
 
 void uart_init(void)
@@ -15,5 +15,7 @@ void uart_send(const char* message)
     if (message != NULL)
     {
         HAL_UART_Transmit(&huart1, (uint8_t*)message, (uint16_t)strlen(message), 1000);
+
+        HAL_GPIO_TogglePin(LED_COMM_GPIO_Port, LED_COMM_Pin);
     }
 }
