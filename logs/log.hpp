@@ -1,4 +1,11 @@
-#pragma once
+#ifndef __LOG_HPP
+#define __LOG_HPP
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 
 #include <stdint.h>
 #include <stdarg.h>   // for va_start, va_end
@@ -22,3 +29,9 @@ void log_error(const char* format, ...);
 #define LOG_INFO(...)  log_info(__VA_ARGS__)
 #define LOG_WARN(...)  log_warn(__VA_ARGS__)
 #define LOG_ERROR(...) log_error(__VA_ARGS__)
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __LOG_HPP */
