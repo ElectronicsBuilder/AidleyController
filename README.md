@@ -15,6 +15,8 @@
 
 ## 🔧 Build Instructions (Linux & Windows)
 
+See [GIT_CHEATSHEET.md](GIT_CHEATSHEET.md) for full setup, build, and GitHub CI steps across Windows & Linux.
+
 This project uses CMake + Ninja and the **Arm GNU Toolchain**.
 
 ### 📂 Clone the Repo
@@ -55,3 +57,8 @@ cmake --build build
 
 ✅ Output ELF: build/AidleyController.elf
 
+
+
+## 🛠️ GitHub Actions
+
+This project builds automatically using GitHub Actions CI on every push to `main`
