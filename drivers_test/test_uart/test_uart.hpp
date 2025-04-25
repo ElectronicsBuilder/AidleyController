@@ -8,8 +8,7 @@
 extern "C" {
 #endif
 
-void uartTask(void *argument);
-
+void test_uart_W();
 #ifdef __cplusplus
 }
 #endif

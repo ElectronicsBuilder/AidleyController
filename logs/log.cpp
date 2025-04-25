@@ -10,7 +10,7 @@ void log_set_level(LogLevel level)
 
 static void log_output(const char* color_code, const char* level, const char* format, va_list args)
 {
-    printf("%s[%s] ", color_code, level);
+    printf("\r%s[%s] ", color_code, level);
     vprintf(format, args);
     printf("\033[0m\n");
 }

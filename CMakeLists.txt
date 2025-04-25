@@ -74,6 +74,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 )
 
 
+
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/src
@@ -86,9 +87,23 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/Drivers/STM32F7xx_HAL_Driver/Inc
     ${CMAKE_SOURCE_DIR}/Drivers/STM32F7xx_HAL_Driver/Inc/Legacy
     
+
     ${CMAKE_SOURCE_DIR}/UserDrivers/uart
-    ${CMAKE_SOURCE_DIR}/UserDrivers
+    ${CMAKE_SOURCE_DIR}/UserDrivers/spi_flash
+    ${CMAKE_SOURCE_DIR}/UserDrivers/nvram
+    ${CMAKE_SOURCE_DIR}/UserDrivers/qspi_flash
+
+
+    ${CMAKE_SOURCE_DIR}/drivers_test/test_uart
+    ${CMAKE_SOURCE_DIR}/drivers_test/test_spi_flash
+    ${CMAKE_SOURCE_DIR}/drivers_test/test_nvram
+    ${CMAKE_SOURCE_DIR}/drivers_test/test_qspi_flash
+
+
+
+    
 )
+
 
 
    # ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/DSP/Include  # <- Add this for arm_math.h

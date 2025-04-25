@@ -31,7 +31,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "cmsis_os2.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -161,10 +161,16 @@ void Error_Handler(void);
 #define DOF_BOOTN_GPIO_Port GPIOD
 #define NVRAM_HOLD_Pin GPIO_PIN_15
 #define NVRAM_HOLD_GPIO_Port GPIOD
+#define NVRAM_WP_Pin GPIO_PIN_2
+#define NVRAM_WP_GPIO_Port GPIOG
+#define NVRAM_CS_Pin GPIO_PIN_3
+#define NVRAM_CS_GPIO_Port GPIOG
 #define FLASH_HOLD_Pin GPIO_PIN_4
 #define FLASH_HOLD_GPIO_Port GPIOG
 #define FLASH_CS_Pin GPIO_PIN_5
 #define FLASH_CS_GPIO_Port GPIOG
+#define FLASH_WP_Pin GPIO_PIN_6
+#define FLASH_WP_GPIO_Port GPIOG
 #define PGOOD_5V_Pin GPIO_PIN_7
 #define PGOOD_5V_GPIO_Port GPIOG
 #define PGOOD_3V3_Pin GPIO_PIN_8
