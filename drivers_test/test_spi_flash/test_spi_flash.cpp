@@ -15,6 +15,14 @@ void test_spi_flash_rw()
     const char* msg = "Aidley!";
     uint8_t buf[16] = {0};
 
+    FlashDeviceInfo info = spi_flash_get_info();
+    
+    LOG_INFO("SPI Flash: %s, %lu Mbit", info.part_number, info.capacity_mbit);
+    LOG_INFO("Page Size: %lu bytes, Sector Size: %lu bytes, Quad: %s",
+             info.page_size,
+             info.sector_size,
+             info.supports_quad ? "Yes" : "No");
+
     // Erase
     spi_flash_write_enable();
     uint8_t erase_cmd[4] = { 0x20, 0x00, 0x00, 0x00 };

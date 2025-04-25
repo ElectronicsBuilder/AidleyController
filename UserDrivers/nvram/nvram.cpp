@@ -232,3 +232,13 @@ uint8_t NVRAM::CalculateCRC8(uint8_t* buffer, long length) {
     }
     return crc;
 }
+
+NvramDeviceInfo NVRAM::getDeviceInfo() {
+    return {
+        "CY14B101Q2-LHXI",
+        1024,         // 1 Mbit
+        128,          // 128 KB
+        0x1FFFF,      // Max addressable byte
+        true          // AutoStore enabled
+    };
+}

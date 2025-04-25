@@ -8,6 +8,15 @@
 extern "C" {
 #endif
 
+struct QFlashDeviceInfo {
+    const char* part_number;
+    uint32_t capacity_mbit;
+    uint32_t page_size;
+    uint32_t sector_size;
+    bool supports_quad;
+};
+
+QFlashDeviceInfo qspi_flash_get_info();   // Declare in header
 
 
 void qspi_flash_init(void);

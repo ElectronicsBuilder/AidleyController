@@ -73,3 +73,15 @@ void qspi_flash_init(void)
     qspi_flash_reset();
     // Optionally: Verify flash ID here if you want
 }
+
+QFlashDeviceInfo qspi_flash_get_info() {
+
+    QFlashDeviceInfo info = {
+        .part_number = "W25Q128JVEIQ",
+        .capacity_mbit = 128,
+        .page_size = 256,
+        .sector_size = 4096,
+        .supports_quad = 1
+    };
+    return info;
+}

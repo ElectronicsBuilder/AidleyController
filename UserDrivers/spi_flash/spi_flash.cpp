@@ -47,3 +47,14 @@ void spi_flash_read_id(uint8_t *id_buf)
     HAL_SPI_Receive(&hspi1, id_buf, 3, HAL_MAX_DELAY);
     HAL_GPIO_WritePin(FLASH_CS_GPIO_Port, FLASH_CS_Pin, GPIO_PIN_SET);
 }
+
+FlashDeviceInfo spi_flash_get_info() {
+    FlashDeviceInfo info = {
+        .part_number = "W25Q128JVEIQ",
+        .capacity_mbit = 128,
+        .page_size = 256,
+        .sector_size = 4096,
+        .supports_quad = 0
+    };
+    return info;
+}

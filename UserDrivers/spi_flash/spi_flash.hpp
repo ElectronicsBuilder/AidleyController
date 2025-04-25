@@ -9,6 +9,17 @@
 extern "C" {
 #endif
 
+struct FlashDeviceInfo {
+    const char* part_number;
+    uint32_t capacity_mbit;
+    uint32_t page_size;
+    uint32_t sector_size;
+    bool supports_quad;
+};
+
+FlashDeviceInfo spi_flash_get_info();   // Declare in header
+
+
 void spi_flash_init(void);
 void spi_flash_reset(void);
 

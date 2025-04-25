@@ -3,6 +3,10 @@
 
 #include "stm32f7xx_hal.h"
 
+#define NVRAM_PART_NUMBER   "CY14B101Q2-LHXI"
+#define NVRAM_CAPACITY_KB   128
+#define NVRAM_HAS_AUTOSTORE 1
+
 struct NVRAM_StatusRegister {
     uint8_t RDY  : 1;
     uint8_t WEN  : 1;
@@ -20,6 +24,15 @@ typedef struct {
     uint8_t crcChecksum;
     uint8_t readBackCrcChecksum;
 } SerialNumber;
+
+struct NvramDeviceInfo {
+    const char* part_number;
+    uint32_t capacity_kbit;
+    uint32_t capacity_kbyte;
+    uint32_t max_address;
+    bool has_autostore;
+};
+
 
 class NVRAM {
 public:
@@ -54,6 +67,9 @@ public:
     uint32_t get_DeviceID();
 
     uint8_t CalculateCRC8(uint8_t* buffer, long length);
+
+    NvramDeviceInfo getDeviceInfo();
+    
 
 private:
     void select();
