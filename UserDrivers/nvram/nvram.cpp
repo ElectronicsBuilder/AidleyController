@@ -1,4 +1,4 @@
-#include "NVRAM.hpp"
+#include "nvram.hpp"
 #include <string.h>
 
 
