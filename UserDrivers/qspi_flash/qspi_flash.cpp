@@ -1,87 +1,406 @@
 #include "qspi_flash.hpp"
-#include "main.h"   
-#include "stm32f7xx_hal.h"
-#include "stm32f7xx_hal_qspi.h"
+#include "log.hpp"
+#include "w25q128.h"
 
-extern QSPI_HandleTypeDef hqspi;
+#define QSPI_TIMEOUT_DEFAULT HAL_QPSI_TIMEOUT_DEFAULT_VALUE
 
+QspiFlash::QspiFlash(QSPI_HandleTypeDef* qspiHandle)
+    : qspiHandle(qspiHandle) {}
 
-#define QSPI_TIMEOUT_DEFAULT HAL_QSPI_TIMEOUT_DEFAULT_VALUE
-
-void qspi_flash_reset(void)
+/**
+  * @brief  Initialize the QSPI flash (reset device)
+  */
+void QspiFlash::init()
 {
-    QSPI_CommandTypeDef sCommand = {0};
-
-    // RESET ENABLE
-    sCommand.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
-    sCommand.Instruction       = 0x66; // Reset Enable
-    sCommand.AddressMode       = QSPI_ADDRESS_NONE;
-    sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-    sCommand.DataMode          = QSPI_DATA_NONE;
-    sCommand.DummyCycles       = 0;
-    sCommand.DdrMode           = QSPI_DDR_MODE_DISABLE;
-    sCommand.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
-
-    HAL_QSPI_Command(&hqspi, &sCommand, QSPI_TIMEOUT_DEFAULT);
-
-    // RESET MEMORY
-    sCommand.Instruction = 0x99; // Reset Memory
-
-    HAL_QSPI_Command(&hqspi, &sCommand, QSPI_TIMEOUT_DEFAULT);
+    reset();
 }
 
-void qspi_flash_read_id(uint8_t* id_buffer)
+/**
+  * @brief  Reset the flash memory
+  */
+void QspiFlash::reset()
 {
-    QSPI_CommandTypeDef sCommand = {0};
+    QSPI_CommandTypeDef s_command = {0};
 
-    sCommand.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
-    sCommand.Instruction       = 0x9F; // Read ID
-    sCommand.AddressMode       = QSPI_ADDRESS_NONE;
-    sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-    sCommand.DataMode          = QSPI_DATA_1_LINE;
-    sCommand.DummyCycles       = 0;
-    sCommand.NbData            = 3; // 3 bytes: Manufacturer, Memory Type, Capacity
-    sCommand.DdrMode           = QSPI_DDR_MODE_DISABLE;
-    sCommand.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
+    s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+    s_command.Instruction = RESET_ENABLE_CMD;
+    s_command.AddressMode = QSPI_ADDRESS_NONE;
+    s_command.DataMode = QSPI_DATA_NONE;
+    s_command.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
 
-    HAL_QSPI_Command(&hqspi, &sCommand, QSPI_TIMEOUT_DEFAULT);
-    HAL_QSPI_Receive(&hqspi, id_buffer, QSPI_TIMEOUT_DEFAULT);
+    HAL_QSPI_Command(qspiHandle, &s_command, QSPI_TIMEOUT_DEFAULT);
+
+    s_command.Instruction = RESET_MEMORY_CMD;
+    HAL_QSPI_Command(qspiHandle, &s_command, QSPI_TIMEOUT_DEFAULT);
+
+    autoPollingMemReady();
 }
 
-void qspi_flash_read_data(uint32_t address, uint8_t* buffer, size_t length)
+/**
+  * @brief  Read Flash ID (JEDEC ID)
+  * @param  idBuffer: Buffer to store ID (size 3 bytes)
+  */
+void QspiFlash::readID(uint8_t* idBuffer)
 {
-    QSPI_CommandTypeDef sCommand = {0};
+    QSPI_CommandTypeDef s_command = {0};
 
-    sCommand.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
-    sCommand.Instruction       = 0x03; // Read Data (1-1-1 mode)
-    sCommand.AddressMode       = QSPI_ADDRESS_1_LINE;
-    sCommand.AddressSize       = QSPI_ADDRESS_24_BITS;
-    sCommand.Address           = address;
-    sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-    sCommand.DataMode          = QSPI_DATA_1_LINE;
-    sCommand.DummyCycles       = 8; // Typical for slow read, 8 dummy cycles
-    sCommand.NbData            = length;
-    sCommand.DdrMode           = QSPI_DDR_MODE_DISABLE;
-    sCommand.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
+    s_command.Instruction = READ_JEDEC_ID_CMD;
+    s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+    s_command.DataMode = QSPI_DATA_1_LINE;
+    s_command.NbData = 3;
 
-    HAL_QSPI_Command(&hqspi, &sCommand, QSPI_TIMEOUT_DEFAULT);
-    HAL_QSPI_Receive(&hqspi, buffer, QSPI_TIMEOUT_DEFAULT);
+    HAL_QSPI_Command(qspiHandle, &s_command, QSPI_TIMEOUT_DEFAULT);
+    HAL_QSPI_Receive(qspiHandle, idBuffer, QSPI_TIMEOUT_DEFAULT);
 }
 
-void qspi_flash_init(void)
+/**
+  * @brief  Read data from flash (normal 1-line read)
+  */
+void QspiFlash::readData(uint32_t address, uint8_t* buffer, size_t size)
 {
-    qspi_flash_reset();
-    // Optionally: Verify flash ID here if you want
+    QSPI_CommandTypeDef s_command = {0};
+
+    s_command.Instruction = READ_DATA_CMD;
+    s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+    s_command.AddressMode = QSPI_ADDRESS_1_LINE;
+    s_command.AddressSize = QSPI_ADDRESS_24_BITS;
+    s_command.Address = address;
+    s_command.DataMode = QSPI_DATA_1_LINE;
+    s_command.DummyCycles = 0;
+    s_command.NbData = size;
+
+    HAL_QSPI_Command(qspiHandle, &s_command, QSPI_TIMEOUT_DEFAULT);
+    HAL_QSPI_Receive(qspiHandle, buffer, QSPI_TIMEOUT_DEFAULT);
 }
 
-QFlashDeviceInfo qspi_flash_get_info() {
+/**
+  * @brief  Read data from flash using Quad mode
+  */
+void QspiFlash::readDataQuad(uint32_t address, uint8_t* buffer, size_t size)
+{
+    QSPI_CommandTypeDef s_command = {0};
 
-    QFlashDeviceInfo info = {
-        .part_number = "W25Q128JVEIQ",
-        .capacity_mbit = 128,
-        .page_size = 256,
-        .sector_size = 4096,
-        .supports_quad = 1
+    s_command.Instruction = FAST_READ_QUAD_OUT_CMD; // 0x6B
+    s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+    s_command.AddressMode = QSPI_ADDRESS_1_LINE;
+    s_command.AddressSize = QSPI_ADDRESS_24_BITS;
+    s_command.Address = address;
+    s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+    s_command.DataMode = QSPI_DATA_4_LINES;
+    s_command.DummyCycles = W25Q128J_DUMMY_CYCLES_READ; // 8 dummy cycles needed for 0x6B read
+    s_command.NbData = size;
+    s_command.DdrMode = QSPI_DDR_MODE_DISABLE;
+    s_command.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
+    s_command.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+
+    HAL_QSPI_Command(qspiHandle, &s_command, QSPI_TIMEOUT_DEFAULT);
+    HAL_QSPI_Receive(qspiHandle, buffer, QSPI_TIMEOUT_DEFAULT);
+}
+
+/**
+  * @brief  Write data to flash (normal 1-line write)
+  */
+void QspiFlash::writeData(uint32_t address, const uint8_t* data, size_t size)
+{
+    uint32_t currentAddr = address;
+    const uint8_t* currentData = data;
+    uint32_t remaining = size;
+
+    while (remaining > 0) {
+        uint32_t chunk = 256 - (currentAddr % 256);
+        if (chunk > remaining) chunk = remaining;
+
+        inlineWriteEnable();
+
+        QSPI_CommandTypeDef s_command = {0};
+
+        s_command.Instruction = PAGE_PROG_CMD;
+        s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+        s_command.AddressMode = QSPI_ADDRESS_1_LINE;
+        s_command.AddressSize = QSPI_ADDRESS_24_BITS;
+        s_command.Address = currentAddr;
+        s_command.DataMode = QSPI_DATA_1_LINE;
+        s_command.NbData = chunk;
+
+        HAL_QSPI_Command(qspiHandle, &s_command, QSPI_TIMEOUT_DEFAULT);
+        HAL_QSPI_Transmit(qspiHandle, const_cast<uint8_t*>(currentData), QSPI_TIMEOUT_DEFAULT);
+
+        autoPollingMemReady();
+
+        currentAddr += chunk;
+        currentData += chunk;
+        remaining -= chunk;
+    }
+}
+
+/**
+  * @brief  Write data to flash using Quad mode
+  */
+void QspiFlash::writeDataQuad(uint32_t address, const uint8_t* data, size_t size)
+{
+    uint32_t currentAddr = address;
+    const uint8_t* currentData = data;
+    uint32_t remaining = size;
+
+    while (remaining > 0) {
+        uint32_t chunk = 256 - (currentAddr % 256);
+        if (chunk > remaining) chunk = remaining;
+
+        inlineWriteEnable();
+
+        QSPI_CommandTypeDef s_command = {0};
+
+        s_command.Instruction = QUAD_PAGE_PROG_CMD; // 0x32
+        s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+        s_command.AddressMode = QSPI_ADDRESS_1_LINE;
+        s_command.AddressSize = QSPI_ADDRESS_24_BITS;
+        s_command.Address = currentAddr;
+        s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+        s_command.DataMode = QSPI_DATA_4_LINES;
+        s_command.DummyCycles = 0;
+        s_command.NbData = chunk;
+        s_command.DdrMode = QSPI_DDR_MODE_DISABLE;
+        s_command.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
+        s_command.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+
+        HAL_QSPI_Command(qspiHandle, &s_command, QSPI_TIMEOUT_DEFAULT);
+        HAL_QSPI_Transmit(qspiHandle, const_cast<uint8_t*>(currentData), QSPI_TIMEOUT_DEFAULT);
+
+        autoPollingMemReady();
+
+        currentAddr += chunk;
+        currentData += chunk;
+        remaining -= chunk;
+    }
+}
+
+/**
+  * @brief  Erase a sector at specified address
+  */
+void QspiFlash::eraseSector(uint32_t address)
+{
+    inlineWriteEnable();
+
+    QSPI_CommandTypeDef s_command = {0};
+
+    s_command.Instruction = SECTOR_ERASE_CMD; // 0x20
+    s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+    s_command.AddressMode = QSPI_ADDRESS_1_LINE;
+    s_command.AddressSize = QSPI_ADDRESS_24_BITS;
+    s_command.Address = address;
+    s_command.DataMode = QSPI_DATA_NONE;
+
+    HAL_QSPI_Command(qspiHandle, &s_command, QSPI_TIMEOUT_DEFAULT);
+
+    autoPollingMemReady(W25Q128J_SECTOR_ERASE_MAX_TIME);
+}
+
+/**
+  * @brief  Erase the entire chip
+  */
+void QspiFlash::eraseChip()
+{
+    inlineWriteEnable();
+
+    QSPI_CommandTypeDef s_command = {0};
+
+    s_command.Instruction = CHIP_ERASE_CMD; // 0xC7
+    s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+    s_command.AddressMode = QSPI_ADDRESS_NONE;
+    s_command.DataMode = QSPI_DATA_NONE;
+
+    HAL_QSPI_Command(qspiHandle, &s_command, QSPI_TIMEOUT_DEFAULT);
+
+    autoPollingMemReady(W25Q128J_CHIP_ERASE_MAX_TIME);
+}
+
+/**
+  * @brief  Set the Quad Enable (QE) bit in the status register
+  */
+void QspiFlash::setQuadEnable()
+{
+    uint8_t sr2 = 0;
+    QSPI_CommandTypeDef s_command = {0};
+
+    // Read SR2
+    s_command.Instruction = READ_STATUS_REG_2_CMD;
+    s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+    s_command.AddressMode = QSPI_ADDRESS_NONE;
+    s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+    s_command.DataMode = QSPI_DATA_1_LINE;
+    s_command.NbData = 1;
+    s_command.DummyCycles = 0;
+    s_command.DdrMode = QSPI_DDR_MODE_DISABLE;
+    s_command.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
+    s_command.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+
+    HAL_QSPI_Command(qspiHandle, &s_command, QSPI_TIMEOUT_DEFAULT);
+    HAL_QSPI_Receive(qspiHandle, &sr2, QSPI_TIMEOUT_DEFAULT);
+
+    // Enable Volatile SR Write
+    s_command.Instruction = VOL_SR_WRITE_ENABLE_CMD;
+    s_command.DataMode = QSPI_DATA_NONE;
+    HAL_QSPI_Command(qspiHandle, &s_command, QSPI_TIMEOUT_DEFAULT);
+
+    // Set QE bit and write back SR2
+    sr2 |= W25Q128J_SR2_QE;
+    s_command.Instruction = WRITE_STATUS_REG_2_CMD;
+    s_command.DataMode = QSPI_DATA_1_LINE;
+    s_command.NbData = 1;
+
+    HAL_QSPI_Command(qspiHandle, &s_command, QSPI_TIMEOUT_DEFAULT);
+    HAL_QSPI_Transmit(qspiHandle, &sr2, QSPI_TIMEOUT_DEFAULT);
+}
+
+/**
+  * @brief  Enable memory-mapped mode (1-1-1 normal read)
+  */
+void QspiFlash::enableMemoryMappedMode()
+{
+    QSPI_CommandTypeDef s_command = {0};
+    QSPI_MemoryMappedTypeDef mem_mapped_cfg = {0};
+
+    s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+    s_command.Instruction = READ_DATA_CMD;
+    s_command.AddressMode = QSPI_ADDRESS_1_LINE;
+    s_command.AddressSize = QSPI_ADDRESS_24_BITS;
+    s_command.Address = 0;
+    s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+    s_command.DataMode = QSPI_DATA_1_LINE;
+    s_command.DummyCycles = 0;
+    s_command.DdrMode = QSPI_DDR_MODE_DISABLE;
+    s_command.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
+    s_command.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+
+    mem_mapped_cfg.TimeOutActivation = QSPI_TIMEOUT_COUNTER_DISABLE;
+    mem_mapped_cfg.TimeOutPeriod = 0;
+
+    HAL_QSPI_MemoryMapped(qspiHandle, &s_command, &mem_mapped_cfg);
+}
+
+/**
+  * @brief  Enable memory-mapped mode (1-4-4 quad read)
+  */
+void QspiFlash::enableQuadMemoryMappedMode()
+{
+    QSPI_CommandTypeDef s_command = {0};
+    QSPI_MemoryMappedTypeDef mem_mapped_cfg = {0};
+
+    s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+    s_command.Instruction = FAST_READ_QUAD_INOUT_CMD; // 0xEB
+    s_command.AddressMode = QSPI_ADDRESS_4_LINES;
+    s_command.AddressSize = QSPI_ADDRESS_24_BITS;
+    s_command.Address = 0;
+    s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_4_LINES;
+    s_command.AlternateBytes = 0xFF;
+    s_command.AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS;
+    s_command.DataMode = QSPI_DATA_4_LINES;
+    s_command.DummyCycles = W25Q128J_DUMMY_CYCLES_READ_QUAD;
+    s_command.DdrMode = QSPI_DDR_MODE_DISABLE;
+    s_command.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
+    s_command.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+
+    mem_mapped_cfg.TimeOutActivation = QSPI_TIMEOUT_COUNTER_DISABLE;
+    mem_mapped_cfg.TimeOutPeriod = 0;
+
+    if (HAL_QSPI_MemoryMapped(qspiHandle, &s_command, &mem_mapped_cfg) != HAL_OK) {
+        LOG_ERROR("[ERROR] HAL_QSPI_MemoryMapped failed (Quad Mode)");
+    }
+}
+
+/**
+  * @brief  Enable memory-mapped mode (1-2-2 dual read)
+  */
+void QspiFlash::enableDualMemoryMappedMode()
+{
+    QSPI_CommandTypeDef s_command = {0};
+    QSPI_MemoryMappedTypeDef mem_mapped_cfg = {0};
+
+    s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+    s_command.Instruction = FAST_READ_DUAL_OUT_CMD;
+    s_command.AddressMode = QSPI_ADDRESS_1_LINE;
+    s_command.AddressSize = QSPI_ADDRESS_24_BITS;
+    s_command.Address = 0;
+    s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+    s_command.DataMode = QSPI_DATA_2_LINES;
+    s_command.DummyCycles = 4;
+    s_command.DdrMode = QSPI_DDR_MODE_DISABLE;
+    s_command.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
+    s_command.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+
+    mem_mapped_cfg.TimeOutActivation = QSPI_TIMEOUT_COUNTER_DISABLE;
+    mem_mapped_cfg.TimeOutPeriod = 0;
+
+    if (HAL_QSPI_MemoryMapped(qspiHandle, &s_command, &mem_mapped_cfg) != HAL_OK) {
+        LOG_ERROR("[ERROR] HAL_QSPI_MemoryMapped failed (Dual Mode)");
+    }
+}
+
+
+
+/**
+  * @brief  Get the flash device information
+  */
+QFlashDeviceInfo QspiFlash::getDeviceInfo()
+{
+    return {
+        "W25Q128JVEIQ",
+        128,
+        256,
+        4096,
+        true
     };
-    return info;
+}
+
+// --- Private helpers ---
+
+void QspiFlash::inlineWriteEnable()
+{
+    QSPI_CommandTypeDef s_command = {0};
+
+    s_command.Instruction = WRITE_ENABLE_CMD;
+    s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+    s_command.DataMode = QSPI_DATA_NONE;
+
+    HAL_QSPI_Command(qspiHandle, &s_command, QSPI_TIMEOUT_DEFAULT);
+
+    uint8_t status = getStatus();
+    if (!(status & W25Q128J_SR_WEL)) {
+        LOG_ERROR("[ERROR] WEL not set after Write Enable");
+    }
+}
+
+void QspiFlash::autoPollingMemReady(uint32_t timeout)
+{
+    QSPI_CommandTypeDef s_command = {0};
+    QSPI_AutoPollingTypeDef config = {0};
+
+    s_command.Instruction = READ_STATUS_REG_CMD;
+    s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+    s_command.DataMode = QSPI_DATA_1_LINE;
+
+    config.Match = 0x00;
+    config.Mask = 0x01;
+    config.MatchMode = QSPI_MATCH_MODE_AND;
+    config.StatusBytesSize = 1;
+    config.Interval = 0x10;
+    config.AutomaticStop = QSPI_AUTOMATIC_STOP_ENABLE;
+
+    HAL_QSPI_AutoPolling(qspiHandle, &s_command, &config, timeout);
+}
+
+uint8_t QspiFlash::getStatus()
+{
+    QSPI_CommandTypeDef s_command = {0};
+    uint8_t reg = 0;
+
+    s_command.Instruction = READ_STATUS_REG_CMD;
+    s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+    s_command.DataMode = QSPI_DATA_1_LINE;
+    s_command.NbData = 1;
+
+    HAL_QSPI_Command(qspiHandle, &s_command, QSPI_TIMEOUT_DEFAULT);
+    HAL_QSPI_Receive(qspiHandle, &reg, QSPI_TIMEOUT_DEFAULT);
+
+    return reg;
 }

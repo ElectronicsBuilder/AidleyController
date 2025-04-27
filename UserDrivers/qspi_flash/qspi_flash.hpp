@@ -1,12 +1,9 @@
-#ifndef __QSPI_FLASH_HPP
-#define __QSPI_FLASH_HPP
-
+#ifndef QSPI_FLASH_HPP
+#define QSPI_FLASH_HPP
 
 #include "stm32f7xx_hal.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <stdint.h>
+#include <stddef.h>
 
 struct QFlashDeviceInfo {
     const char* part_number;
@@ -16,16 +13,35 @@ struct QFlashDeviceInfo {
     bool supports_quad;
 };
 
-QFlashDeviceInfo qspi_flash_get_info();   // Declare in header
+class QspiFlash {
+public:
+    QspiFlash(QSPI_HandleTypeDef* qspiHandle);
 
+    void init();
+    void reset();
+    void readID(uint8_t* idBuffer);
 
-void qspi_flash_init(void);
-void qspi_flash_reset(void);
-void qspi_flash_read_id(uint8_t* id_buffer);
-void qspi_flash_read_data(uint32_t address, uint8_t* buffer, size_t length);
+    void readData(uint32_t address, uint8_t* buffer, size_t size);
+    void readDataQuad(uint32_t address, uint8_t* buffer, size_t size);   
 
-#ifdef __cplusplus
-}
-#endif
+    void writeData(uint32_t address, const uint8_t* data, size_t size);
+    void writeDataQuad(uint32_t address, const uint8_t* data, size_t size);
 
-#endif /* __QSPI_FLASH_HPP */
+    void eraseSector(uint32_t address);
+    void eraseChip();
+
+    void setQuadEnable();
+    void enableMemoryMappedMode();
+    void enableQuadMemoryMappedMode();
+    void enableDualMemoryMappedMode();
+    void readIDQuad(uint8_t* idBuffer);
+    QFlashDeviceInfo getDeviceInfo();
+
+private:
+    QSPI_HandleTypeDef* qspiHandle;
+    void inlineWriteEnable();
+    void autoPollingMemReady(uint32_t timeout = HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
+    uint8_t getStatus();
+};
+
+#endif // QSPI_FLASH_HPP

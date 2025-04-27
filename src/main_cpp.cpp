@@ -28,7 +28,7 @@ const osThreadAttr_t heartbeatTask_attributes = {
 osThreadId_t test_peripheralsTask_TaskHandle;
 const osThreadAttr_t test_peripheralsTask_attributes = {
 	.name = "Test Peripherals TASK",
-	.stack_size = 1024 * 4,
+	.stack_size = 1024 * 8,
 	.priority = (osPriority_t)osPriorityNormal
 
 };
@@ -46,7 +46,7 @@ void main_cpp(void)
 
  
 
-
+    HAL_Delay(2000);
     osKernelInitialize();
 
 

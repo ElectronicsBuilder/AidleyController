@@ -5,8 +5,6 @@
 extern "C" {
 #endif
 
-//void test_spi_flash_task(void *argument);
-
 void test_spi_flash_rw();
 
 #ifdef __cplusplus

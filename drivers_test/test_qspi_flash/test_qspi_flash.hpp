@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-void test_qspi_flash_id();
+void qspi_flash_self_test();
 
 #ifdef __cplusplus
 }

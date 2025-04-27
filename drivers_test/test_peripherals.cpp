@@ -18,7 +18,7 @@ typedef struct {
     bool test_uart;
     bool test_nvram;
     bool test_spi_flash;
-    bool test_qspi;
+    bool test_qspi_flash;
 
 } TestConfig;
 
@@ -28,13 +28,17 @@ void test_peripheralsTask(void *argument)
 {
     TestConfig *cfg = (TestConfig *)argument;
 
-    if (cfg->test_nvram) test_uart_W();
-    if (cfg->test_nvram) test_nvram_class_driver();
-    if (cfg->test_spi_flash) test_spi_flash_rw();
-    if (cfg->test_qspi) test_qspi_flash_id();
+    HAL_GPIO_WritePin(LED_ACTY_GPIO_Port, LED_ACTY_Pin, GPIO_PIN_RESET);  // ACTIVE
+
+    if (cfg->test_nvram) test_uart_W();                     
+    if (cfg->test_nvram) test_nvram_class_driver();          
+    if (cfg->test_spi_flash) test_spi_flash_rw();            
+    if (cfg->test_qspi_flash) qspi_flash_self_test();       
+ 
+    HAL_GPIO_WritePin(LED_ACTY_GPIO_Port, LED_ACTY_Pin, GPIO_PIN_SET);  // Done
 
     PeripheralsTestComplete = true;
-    
+
     osThreadExit();
    
 }

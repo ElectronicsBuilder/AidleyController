@@ -19,7 +19,6 @@ void nvram_init()
 
 void test_nvram_class_driver()
 {
-    HAL_GPIO_WritePin(LED_ACTY_GPIO_Port, LED_ACTY_Pin, GPIO_PIN_RESET);  // Active
 
     nvram_init();
 
@@ -33,7 +32,7 @@ void test_nvram_class_driver()
              info.max_address,
              info.has_autostore ? "Yes" : "No");
 
-             
+
     const char* message = "Aidley NVRAM!";
     uint8_t readback[32] = {0};
 
@@ -44,7 +43,6 @@ void test_nvram_class_driver()
 
     nvram.readArray(0x0000, readback, strlen(message));
     LOG_INFO("NVRAM Readback: %s", readback);
-    HAL_GPIO_WritePin(LED_ACTY_GPIO_Port, LED_ACTY_Pin, GPIO_PIN_SET);    // Done
 }
 
 

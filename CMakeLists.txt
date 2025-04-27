@@ -98,13 +98,13 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/drivers_test/test_spi_flash
     ${CMAKE_SOURCE_DIR}/drivers_test/test_nvram
     ${CMAKE_SOURCE_DIR}/drivers_test/test_qspi_flash
-
-
-
     
 )
 
-
+target_include_directories(AidleyController
+    PRIVATE
+    userDrivers/components/w25q128
+)
 
    # ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/DSP/Include  # <- Add this for arm_math.h
    # ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/NN/Include  # <- Add this for arm_math.h

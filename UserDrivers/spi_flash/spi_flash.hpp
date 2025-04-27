@@ -1,13 +1,9 @@
-// File: UserDrivers/spi_flash/spi_flash.hpp
 #ifndef SPI_FLASH_HPP
 #define SPI_FLASH_HPP
 
+#include "stm32f7xx_hal.h"
 #include <stdint.h>
 #include <stddef.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct FlashDeviceInfo {
     const char* part_number;
@@ -17,20 +13,30 @@ struct FlashDeviceInfo {
     bool supports_quad;
 };
 
-FlashDeviceInfo spi_flash_get_info();   // Declare in header
+class SpiFlash {
+public:
+    SpiFlash(SPI_HandleTypeDef* spiHandle, GPIO_TypeDef* csPort, uint16_t csPin);
 
+    void init();
+    void writeEnable();
+    void reset(); // Reserved for future use
 
-void spi_flash_init(void);
-void spi_flash_reset(void);
+    void writeData(uint32_t address, const uint8_t* data, size_t length);
+    void readData(uint32_t address, uint8_t* buffer, size_t length);
+    void eraseSector(uint32_t address);  // <-- NEW METHOD
 
-void spi_flash_write(uint32_t address, const uint8_t *data, size_t length);
-void spi_flash_read(uint32_t address, uint8_t *buffer, size_t length);
+    uint32_t readDeviceID();
+    FlashDeviceInfo getDeviceInfo();
 
-void spi_flash_read_id(uint8_t *buffer);
-void spi_flash_write_enable();
+private:
+    void select();
+    void deselect();
+    void sendCommand(uint8_t cmd);
+    void pollBusy();  // <-- NEW HELPER
 
-#ifdef __cplusplus
-}
-#endif
+    SPI_HandleTypeDef* spiHandle;
+    GPIO_TypeDef* csPort;
+    uint16_t csPin;
+};
 
-#endif /* SPI_FLASH_HPP */
+#endif // SPI_FLASH_HPP
