@@ -103,7 +103,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 target_include_directories(AidleyController
     PRIVATE
-    userDrivers/components/w25q128
+    UserDrivers/components/w25q128
 )
 
    # ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/DSP/Include  # <- Add this for arm_math.h
