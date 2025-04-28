@@ -4,6 +4,10 @@
 
 #define QSPI_TIMEOUT_DEFAULT HAL_QPSI_TIMEOUT_DEFAULT_VALUE
 
+
+volatile bool qspi_dma_tx_done = false;
+
+
 QspiFlash::QspiFlash(QSPI_HandleTypeDef* qspiHandle)
     : qspiHandle(qspiHandle) {}
 
@@ -336,7 +340,119 @@ void QspiFlash::enableDualMemoryMappedMode()
     }
 }
 
+/**
+  * @brief  Write data to flash using Quad mode with DMA
+  * @param  address: Flash start address
+  * @param  data: Pointer to input buffer
+  * @param  size: Number of bytes to write
+  * @retval true if started OK, false if error
+  */
+ bool QspiFlash::writeDataQuadDMA(uint32_t address, const uint8_t* data, size_t size)
+ {
+     if (size == 0 || data == nullptr) {
+         return false;
+     }
+ 
+     inlineWriteEnable();
+ 
+     QSPI_CommandTypeDef s_command = {0};
+ 
+     s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+     s_command.Instruction = QUAD_PAGE_PROG_CMD; // 0x32
+     s_command.AddressMode = QSPI_ADDRESS_1_LINE;
+     s_command.AddressSize = QSPI_ADDRESS_24_BITS;
+     s_command.Address = address;
+     s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+     s_command.DataMode = QSPI_DATA_4_LINES;
+     s_command.DummyCycles = 0;
+     s_command.NbData = size;
+     s_command.DdrMode = QSPI_DDR_MODE_DISABLE;
+     s_command.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
+     s_command.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+ 
+     if (HAL_QSPI_Command(qspiHandle, &s_command, QSPI_TIMEOUT_DEFAULT) != HAL_OK) {
+         LOG_ERROR("[ERROR] HAL_QSPI_Command failed before DMA transmit");
+         return false;
+     }
+ 
+     /* Start DMA transmit */
+     if (HAL_QSPI_Transmit_DMA(qspiHandle, const_cast<uint8_t*>(data)) != HAL_OK) {
+         LOG_ERROR("[ERROR] HAL_QSPI_Transmit_DMA failed to start");
+         return false;
+     }
+ 
+     /* Note: You must wait for completion in your app! */
+     return true;
+ }
+ 
+ /**
+  * @brief  Wait until DMA operation completes or timeout occurs
+  * @param  timeout_ms: Timeout in milliseconds
+  * @retval true if DMA completed, false if timeout
+  */
+bool QspiFlash::waitDmaComplete(uint32_t timeout_ms)
+{
+    uint32_t start = HAL_GetTick();
 
+    while (!qspi_dma_tx_done)
+    {
+        if ((HAL_GetTick() - start) >= timeout_ms) {
+            LOG_ERROR("[ERROR] waitDmaComplete() timed out after %lu ms", timeout_ms);
+            return false;
+        }
+    }
+
+    qspi_dma_tx_done = false; // Reset for next operation
+    return true;
+}
+
+
+/**
+  * @brief  Read data from flash using Quad mode with DMA
+  * @param  address: Flash start address
+  * @param  buffer: Pointer to receive buffer
+  * @param  size: Number of bytes to read
+  * @retval true if started OK, false if error
+  */
+ bool QspiFlash::readDataQuadDMA(uint32_t address, uint8_t* buffer, size_t size)
+ {
+     if (size == 0 || buffer == nullptr) {
+         return false;
+     }
+ 
+     QSPI_CommandTypeDef s_command = {0};
+ 
+     /* Initialize Quad Output Fast Read command */
+     s_command.Instruction = FAST_READ_QUAD_OUT_CMD; // 0x6B
+     s_command.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+     s_command.AddressMode = QSPI_ADDRESS_1_LINE;
+     s_command.AddressSize = QSPI_ADDRESS_24_BITS;
+     s_command.Address = address;
+     s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+     s_command.DataMode = QSPI_DATA_4_LINES;
+     s_command.DummyCycles = 8; // For 0x6B, quad output fast read
+     s_command.NbData = size;
+     s_command.DdrMode = QSPI_DDR_MODE_DISABLE;
+     s_command.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
+     s_command.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+ 
+     /* Send the command */
+     if (HAL_QSPI_Command(qspiHandle, &s_command, QSPI_TIMEOUT_DEFAULT) != HAL_OK) {
+         LOG_ERROR("[ERROR] HAL_QSPI_Command failed before DMA receive");
+         return false;
+     }
+ 
+     /* Start DMA receive */
+     if (HAL_QSPI_Receive_DMA(qspiHandle, buffer) != HAL_OK) {
+         LOG_ERROR("[ERROR] HAL_QSPI_Receive_DMA failed to start");
+         return false;
+     }
+ 
+     /* Note: You must wait for completion separately */
+     return true;
+ }
+
+ 
 
 /**
   * @brief  Get the flash device information

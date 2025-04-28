@@ -9,6 +9,7 @@
 #include "test_qspi_flash.hpp"
 
 extern QSPI_HandleTypeDef hqspi;
+extern bool qspi_dma_tx_done;
 
 
 #define QSPI_MEM_BASE_ADDR  ((uint8_t*)0x90000000)
@@ -18,14 +19,14 @@ extern QSPI_HandleTypeDef hqspi;
 void qspi_flash_self_test()
 {
     uint8_t id[3] = {0};
-    
 
     QspiFlash flash(&hqspi);
 
+    /* Read and display JEDEC ID */
     flash.readID(id);
-
     LOG_INFO("[TEST] Quad Read JEDEC ID: 0x%02X 0x%02X 0x%02X", id[0], id[1], id[2]);
 
+    /* Get and display device info */
     QFlashDeviceInfo info = flash.getDeviceInfo();
     LOG_INFO("QSPI Flash: %s, %lu Mbit", info.part_number, info.capacity_mbit);
     LOG_INFO("Page Size: %lu bytes, Sector Size: %lu bytes, Quad: %s",
@@ -33,9 +34,9 @@ void qspi_flash_self_test()
              info.sector_size,
              info.supports_quad ? "Yes" : "No");
 
-
     constexpr uint32_t test_addr = 0x0000;
     const char initial_data[] = "QSPI Quad Test OK";
+    const char dma_data[] = "QSPI DMA Write Test OK";
     const char memory_mapped_data[] = "QSPI Quad Test Memory Mapped OK";
     uint8_t read_buffer[64] = {0};
 
@@ -55,8 +56,48 @@ void qspi_flash_self_test()
         LOG_ERROR("[ERROR] Quad Command Readback Failed (First Write)!");
     }
 
-    /* Overwrite with new data */
-    flash.eraseSector(test_addr); // Re-erase before overwrite
+    /* Erase sector again for DMA Write */
+    flash.eraseSector(test_addr);
+
+    /* Write using DMA */
+    flash.writeDataQuadDMA(test_addr, reinterpret_cast<const uint8_t*>(dma_data), sizeof(dma_data));
+    LOG_INFO("[TEST] Started DMA Write: %s", dma_data);
+
+    /* Wait for DMA completion  */
+
+    if (!flash.waitDmaComplete(1000)) {
+        LOG_ERROR("[ERROR] DMA Wait Timeout!");
+        return;
+    }
+
+    /* After DMA complete, make sure flash is ready */
+    flash.autoPollingMemReady();
+
+    /* Read back after DMA Write */
+    //flash.readDataQuad(test_addr, read_buffer, sizeof(dma_data));
+    //LOG_INFO("[TEST] Read back data (After DMA Write): %s", read_buffer);
+
+
+    flash.readDataQuadDMA(test_addr, read_buffer, sizeof(dma_data));
+
+    if (!flash.waitDmaComplete(1000)) {
+        LOG_ERROR("[ERROR] DMA Read Timeout!");
+        return;
+    }
+
+    LOG_INFO("[TEST] Read back data (After DMA Read): %s", read_buffer);
+
+
+
+    /* Verify DMA Write result */
+    if (memcmp(read_buffer, dma_data, sizeof(dma_data)) != 0) {
+        LOG_ERROR("[ERROR] DMA Write Readback Failed!");
+    }
+
+    /* Erase sector again for Memory Mapped test */
+    flash.eraseSector(test_addr);
+
+    /* Write using normal Quad Write again */
     flash.writeDataQuad(test_addr, reinterpret_cast<const uint8_t*>(memory_mapped_data), sizeof(memory_mapped_data));
     LOG_INFO("[TEST] Memory-Mapped Written data : %s", memory_mapped_data);
 
@@ -72,5 +113,5 @@ void qspi_flash_self_test()
         LOG_ERROR("[ERROR] Memory-Mapped Readback Failed!");
     }
 
-    LOG_INFO("[PASS] QSPI Flash Quad Write, Read and MemoryMapped Passed");
+    LOG_INFO("[PASS] QSPI Flash Quad Write, DMA Write, Read and MemoryMapped Passed");
 }

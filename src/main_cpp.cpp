@@ -15,7 +15,7 @@
 #include "test_peripherals.hpp"
 
 void heartbeatTask(void *argument);
-
+extern bool  qspi_dma_tx_done;
 
 osThreadId_t heartbeatTask_TaskHandle;
 const osThreadAttr_t heartbeatTask_attributes = {
@@ -80,7 +80,15 @@ void main_cpp(void)
 
 
 
+extern "C" void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef *hqspi)
+{
+    qspi_dma_tx_done = true; // A global or static volatile flag
+}
 
+extern "C" void HAL_QSPI_RxCpltCallback(QSPI_HandleTypeDef *hqspi)
+{
+    qspi_dma_tx_done = true;
+}
 
 
 
