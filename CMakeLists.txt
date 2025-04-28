@@ -92,13 +92,13 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/UserDrivers/spi_flash
     ${CMAKE_SOURCE_DIR}/UserDrivers/nvram
     ${CMAKE_SOURCE_DIR}/UserDrivers/qspi_flash
-
+    ${CMAKE_SOURCE_DIR}/UserDrivers/SHT4x
 
     ${CMAKE_SOURCE_DIR}/drivers_test/test_uart
     ${CMAKE_SOURCE_DIR}/drivers_test/test_spi_flash
     ${CMAKE_SOURCE_DIR}/drivers_test/test_nvram
     ${CMAKE_SOURCE_DIR}/drivers_test/test_qspi_flash
-    
+    ${CMAKE_SOURCE_DIR}/drivers_test/test_SHT4x
 )
 
 target_include_directories(AidleyController
@@ -125,3 +125,5 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 
     # Add user defined libraries
 )
+
+target_link_options(AidleyController PRIVATE -u _printf_float)

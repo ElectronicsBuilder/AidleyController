@@ -26,7 +26,7 @@ void test_nvram_class_driver()
 
     auto info = nvram.getDeviceInfo();
 
-    LOG_INFO("NVRAM: %s, %lu KB, Max Addr: 0x%05lX, AutoStore: %s",
+    LOG_INFO("[TEST] NVRAM: %s, %lu KB, Max Addr: 0x%05lX, AutoStore: %s",
              info.part_number,
              info.capacity_kbyte,
              info.max_address,
@@ -42,7 +42,7 @@ void test_nvram_class_driver()
     osDelay(1); // or poll RDY bit if STORE/RECALL used
 
     nvram.readArray(0x0000, readback, strlen(message));
-    LOG_INFO("NVRAM Readback: %s", readback);
+    LOG_INFO("[TEST] NVRAM Readback: %s", readback);
 }
 
 

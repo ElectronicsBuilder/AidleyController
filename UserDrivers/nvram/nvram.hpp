@@ -1,6 +1,11 @@
 #ifndef NVRAM_HPP
 #define NVRAM_HPP
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #include "stm32f7xx_hal.h"
 
 #define NVRAM_PART_NUMBER   "CY14B101Q2-LHXI"
@@ -102,5 +107,9 @@ private:
     static constexpr uint32_t CRC_DATA_SIZE = 7U;
     static constexpr uint32_t SN_DATA_OFFSET = 1U;
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // NVRAM_HPP

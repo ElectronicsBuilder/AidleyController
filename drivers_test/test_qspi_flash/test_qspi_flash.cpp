@@ -28,8 +28,8 @@ void qspi_flash_self_test()
 
     /* Get and display device info */
     QFlashDeviceInfo info = flash.getDeviceInfo();
-    LOG_INFO("QSPI Flash: %s, %lu Mbit", info.part_number, info.capacity_mbit);
-    LOG_INFO("Page Size: %lu bytes, Sector Size: %lu bytes, Quad: %s",
+    LOG_INFO("[TEST] QSPI Flash: %s, %lu Mbit", info.part_number, info.capacity_mbit);
+    LOG_INFO("[TEST] Page Size: %lu bytes, Sector Size: %lu bytes, Quad: %s",
              info.page_size,
              info.sector_size,
              info.supports_quad ? "Yes" : "No");
@@ -74,9 +74,6 @@ void qspi_flash_self_test()
     flash.autoPollingMemReady();
 
     /* Read back after DMA Write */
-    //flash.readDataQuad(test_addr, read_buffer, sizeof(dma_data));
-    //LOG_INFO("[TEST] Read back data (After DMA Write): %s", read_buffer);
-
 
     flash.readDataQuadDMA(test_addr, read_buffer, sizeof(dma_data));
 

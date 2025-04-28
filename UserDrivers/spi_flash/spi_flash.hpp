@@ -1,6 +1,13 @@
 #ifndef SPI_FLASH_HPP
 #define SPI_FLASH_HPP
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+
 #include "stm32f7xx_hal.h"
 #include <stdint.h>
 #include <stddef.h>
@@ -38,5 +45,11 @@ private:
     GPIO_TypeDef* csPort;
     uint16_t csPin;
 };
+
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif // SPI_FLASH_HPP

@@ -1,6 +1,12 @@
 #ifndef QSPI_FLASH_HPP
 #define QSPI_FLASH_HPP
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #include "stm32f7xx_hal.h"
 #include <stdint.h>
 #include <stddef.h>
@@ -26,7 +32,7 @@ public:
     void readData(uint32_t address, uint8_t* buffer, size_t size);
     void readDataQuad(uint32_t address, uint8_t* buffer, size_t size);   
     bool readDataQuadDMA(uint32_t address, uint8_t* buffer, size_t size);
-    
+
     void writeData(uint32_t address, const uint8_t* data, size_t size);
     void writeDataQuad(uint32_t address, const uint8_t* data, size_t size);
     bool writeDataQuadDMA(uint32_t address, const uint8_t* data, size_t size);
@@ -52,5 +58,11 @@ private:
     
     uint8_t getStatus();
 };
+
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif // QSPI_FLASH_HPP
