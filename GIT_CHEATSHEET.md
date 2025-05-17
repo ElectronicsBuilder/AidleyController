@@ -169,5 +169,5 @@ build/
 
 ## 💬 Maintainer
 
-This repo is maintained by **Fallen Evangelion** / ElectronicsBuilder  
+This repo is maintained by ElectronicsBuilder  
 You’re free to fork and adapt this sheet to your embedded projects.
