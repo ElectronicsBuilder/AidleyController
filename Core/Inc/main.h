@@ -207,6 +207,8 @@ void Error_Handler(void);
 #define TOF1_GPIO_GPIO_Port GPIOD
 #define TOF1_En_Pin GPIO_PIN_4
 #define TOF1_En_GPIO_Port GPIOD
+#define DOF_CS_Pin GPIO_PIN_5
+#define DOF_CS_GPIO_Port GPIOD
 #define CPT_INT_Pin GPIO_PIN_15
 #define CPT_INT_GPIO_Port GPIOG
 #define PPM_OEB4_Pin GPIO_PIN_4

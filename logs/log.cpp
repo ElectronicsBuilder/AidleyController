@@ -1,4 +1,5 @@
 #include "log.hpp"
+#include "main.h"
 #include <stdio.h>
 
 static LogLevel current_log_level = LOG_DEBUG;
@@ -52,6 +53,10 @@ void log_error(const char* format, ...)
 {
     if (current_log_level <= LOG_ERROR)
     {
+        // Turn on ERROR LED (active low)
+        if (HAL_GPIO_ReadPin(LED_ERROR_GPIO_Port, LED_ERROR_Pin) != GPIO_PIN_RESET) {
+            HAL_GPIO_WritePin(LED_ERROR_GPIO_Port, LED_ERROR_Pin, GPIO_PIN_RESET);
+        }
         va_list args;
         va_start(args, format);
         log_output("\033[31m", "ERROR", format, args);

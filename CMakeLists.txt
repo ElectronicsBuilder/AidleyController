@@ -64,6 +64,7 @@ file(GLOB_RECURSE PROJECT_SOURCES
     "${CMAKE_SOURCE_DIR}/drivers_test/**/*.cpp"
     "${CMAKE_SOURCE_DIR}/drivers_test/*.cpp"
     "${CMAKE_SOURCE_DIR}/UserDrivers/**/*.cpp"
+    "${CMAKE_SOURCE_DIR}/UserDrivers/**/*.c"
     "${CMAKE_SOURCE_DIR}/logs/*.cpp"
 )
 
@@ -93,12 +94,19 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/UserDrivers/nvram
     ${CMAKE_SOURCE_DIR}/UserDrivers/qspi_flash
     ${CMAKE_SOURCE_DIR}/UserDrivers/SHT4x
+    ${CMAKE_SOURCE_DIR}/UserDrivers/BMP581
+    ${CMAKE_SOURCE_DIR}/UserDrivers/BNO085
+    ${CMAKE_SOURCE_DIR}/UserDrivers/BQ27441
 
     ${CMAKE_SOURCE_DIR}/drivers_test/test_uart
     ${CMAKE_SOURCE_DIR}/drivers_test/test_spi_flash
     ${CMAKE_SOURCE_DIR}/drivers_test/test_nvram
     ${CMAKE_SOURCE_DIR}/drivers_test/test_qspi_flash
     ${CMAKE_SOURCE_DIR}/drivers_test/test_SHT4x
+    ${CMAKE_SOURCE_DIR}/drivers_test/test_BMP581
+    ${CMAKE_SOURCE_DIR}/drivers_test/test_I2C
+    ${CMAKE_SOURCE_DIR}/drivers_test/test_BNO085
+    ${CMAKE_SOURCE_DIR}/drivers_test/test_BQ27441
 )
 
 target_include_directories(AidleyController

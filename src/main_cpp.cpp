@@ -14,13 +14,18 @@
 #include "test_spi_flash.hpp"
 #include "test_peripherals.hpp"
 
+extern volatile bool _intFlag;
+extern "C" {
+    #include "sh2.h"
+    }
+
 void heartbeatTask(void *argument);
 extern bool  qspi_dma_tx_done;
 
 osThreadId_t heartbeatTask_TaskHandle;
 const osThreadAttr_t heartbeatTask_attributes = {
 	.name = "heartbeat TASK",
-	.stack_size = 512 * 1,
+	.stack_size = 2048 * 1,
 	.priority = (osPriority_t)osPriorityNormal
 
 };
@@ -28,7 +33,7 @@ const osThreadAttr_t heartbeatTask_attributes = {
 osThreadId_t test_peripheralsTask_TaskHandle;
 const osThreadAttr_t test_peripheralsTask_attributes = {
 	.name = "Test Peripherals TASK",
-	.stack_size = 1024 * 8,
+	.stack_size = 2048 * 5,
 	.priority = (osPriority_t)osPriorityNormal
 
 };
@@ -47,11 +52,16 @@ void main_cpp(void)
  
 
     HAL_Delay(2000);
+
+
+
+
     osKernelInitialize();
 
 
     heartbeatTask_TaskHandle            = osThreadNew(heartbeatTask, NULL, &heartbeatTask_attributes);
     test_peripheralsTask_TaskHandle     = osThreadNew(test_peripheralsTask, NULL, &test_peripheralsTask_attributes);
+
 
 
     LOG_INFO("About to start FreeRTOS kernel...");
@@ -67,14 +77,16 @@ void main_cpp(void)
 
 
 
- void heartbeatTask(void *argument)
-{ 
-    HAL_GPIO_WritePin(LED_ERROR_GPIO_Port, LED_ERROR_Pin, GPIO_PIN_SET);// clear Error LED
+void heartbeatTask(void *argument)
+{
+    HAL_GPIO_WritePin(LED_ERROR_GPIO_Port, LED_ERROR_Pin, GPIO_PIN_SET); // Clear Error LED
+
+
+    for (;;) {
+  
+        osDelay(500);  // Run every ~500 ms
+        HAL_GPIO_TogglePin(GPIOG, LED_HB_Pin);  
     
-    for (;;)
-    {
-        HAL_GPIO_TogglePin(GPIOG, LED_HB_Pin); // Blink LED
-        osDelay(500);  // 0.5 seconds
     }
 }
 
@@ -92,3 +104,12 @@ extern "C" void HAL_QSPI_RxCpltCallback(QSPI_HandleTypeDef *hqspi)
 
 
 
+
+
+extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    if (GPIO_Pin == DOF_INT_Pin)
+    {
+        _intFlag = true;
+    }
+}

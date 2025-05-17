@@ -24,12 +24,12 @@ void qspi_flash_self_test()
 
     /* Read and display JEDEC ID */
     flash.readID(id);
-    LOG_INFO("[TEST] Quad Read JEDEC ID: 0x%02X 0x%02X 0x%02X", id[0], id[1], id[2]);
+    LOG_INFO("[QSPI] Quad Read JEDEC ID: 0x%02X 0x%02X 0x%02X", id[0], id[1], id[2]);
 
     /* Get and display device info */
     QFlashDeviceInfo info = flash.getDeviceInfo();
-    LOG_INFO("[TEST] QSPI Flash: %s, %lu Mbit", info.part_number, info.capacity_mbit);
-    LOG_INFO("[TEST] Page Size: %lu bytes, Sector Size: %lu bytes, Quad: %s",
+    LOG_INFO("[QSPI] QSPI Flash: %s, %lu Mbit", info.part_number, info.capacity_mbit);
+    LOG_INFO("[QSPI] Page Size: %lu bytes, Sector Size: %lu bytes, Quad: %s",
              info.page_size,
              info.sector_size,
              info.supports_quad ? "Yes" : "No");
@@ -45,7 +45,7 @@ void qspi_flash_self_test()
 
     /* Write initial test data using Quad Write */
     flash.writeDataQuad(test_addr, reinterpret_cast<const uint8_t*>(initial_data), sizeof(initial_data));
-    LOG_INFO("[TEST] Written data (Quad Write 1): %s", initial_data);
+    LOG_INFO("[QSPI] Written data (Quad Write 1): %s", initial_data);
 
     /* Read back using Quad Read command */
     flash.readDataQuad(test_addr, read_buffer, sizeof(initial_data));
@@ -61,7 +61,7 @@ void qspi_flash_self_test()
 
     /* Write using DMA */
     flash.writeDataQuadDMA(test_addr, reinterpret_cast<const uint8_t*>(dma_data), sizeof(dma_data));
-    LOG_INFO("[TEST] Started DMA Write: %s", dma_data);
+    LOG_INFO("[QSPI] Started DMA Write: %s", dma_data);
 
     /* Wait for DMA completion  */
 
@@ -82,7 +82,7 @@ void qspi_flash_self_test()
         return;
     }
 
-    LOG_INFO("[TEST] Read back data (After DMA Read): %s", read_buffer);
+    LOG_INFO("[QSPI] Read back data (After DMA Read): %s", read_buffer);
 
 
 
@@ -96,19 +96,19 @@ void qspi_flash_self_test()
 
     /* Write using normal Quad Write again */
     flash.writeDataQuad(test_addr, reinterpret_cast<const uint8_t*>(memory_mapped_data), sizeof(memory_mapped_data));
-    LOG_INFO("[TEST] Memory-Mapped Written data : %s", memory_mapped_data);
+    LOG_INFO("[QSPI] Memory-Mapped Written data : %s", memory_mapped_data);
 
     /* Enable Memory Mapped Quad Read Mode */
     flash.enableQuadMemoryMappedMode();
 
     /* Direct memory access (assumes 0x90000000 mapped) */
     const uint8_t* mem_mapped_ptr = reinterpret_cast<const uint8_t*>(0x90000000 + test_addr);
-    LOG_INFO("[TEST] Memory-Mapped Read: %s", mem_mapped_ptr);
+    LOG_INFO("[QSPI] Memory-Mapped Read: %s", mem_mapped_ptr);
 
     /* Verify Memory Mapped Read */
     if (memcmp(mem_mapped_ptr, memory_mapped_data, sizeof(memory_mapped_data)) != 0) {
         LOG_ERROR("[ERROR] Memory-Mapped Readback Failed!");
     }
 
-    LOG_INFO("[PASS] QSPI Flash Quad Write, DMA Write, Read and MemoryMapped Passed");
+    LOG_INFO("[QSPI] QSPI Flash Quad Write, DMA Write, Read and MemoryMapped Passed");
 }
