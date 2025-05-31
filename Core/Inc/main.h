@@ -181,8 +181,6 @@ void Error_Handler(void);
 #define PWM_CH7_GPIO_Port GPIOC
 #define PWM_CH8_Pin GPIO_PIN_9
 #define PWM_CH8_GPIO_Port GPIOC
-#define PPM_OE_Pin GPIO_PIN_8
-#define PPM_OE_GPIO_Port GPIOA
 #define SBUS_OE_Pin GPIO_PIN_10
 #define SBUS_OE_GPIO_Port GPIOA
 #define GPOUT_Pin GPIO_PIN_13
@@ -211,8 +209,8 @@ void Error_Handler(void);
 #define DOF_CS_GPIO_Port GPIOD
 #define CPT_INT_Pin GPIO_PIN_15
 #define CPT_INT_GPIO_Port GPIOG
-#define PPM_OEB4_Pin GPIO_PIN_4
-#define PPM_OEB4_GPIO_Port GPIOB
+#define PPM_OE_Pin GPIO_PIN_4
+#define PPM_OE_GPIO_Port GPIOB
 #define BKL_PWM_Pin GPIO_PIN_5
 #define BKL_PWM_GPIO_Port GPIOB
 #define AUDIO_EN_Pin GPIO_PIN_8

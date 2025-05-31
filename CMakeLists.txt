@@ -97,6 +97,10 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/UserDrivers/BMP581
     ${CMAKE_SOURCE_DIR}/UserDrivers/BNO085
     ${CMAKE_SOURCE_DIR}/UserDrivers/BQ27441
+    ${CMAKE_SOURCE_DIR}/UserDrivers/TPS2115
+    ${CMAKE_SOURCE_DIR}/UserDrivers/TPS2121
+    ${CMAKE_SOURCE_DIR}/UserDrivers/TXS0108
+    ${CMAKE_SOURCE_DIR}/UserDrivers/radio_receiver 
 
     ${CMAKE_SOURCE_DIR}/drivers_test/test_uart
     ${CMAKE_SOURCE_DIR}/drivers_test/test_spi_flash
@@ -107,6 +111,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/drivers_test/test_I2C
     ${CMAKE_SOURCE_DIR}/drivers_test/test_BNO085
     ${CMAKE_SOURCE_DIR}/drivers_test/test_BQ27441
+    ${CMAKE_SOURCE_DIR}/drivers_test/test_power_mux
+    ${CMAKE_SOURCE_DIR}/drivers_test/test_radio_receiverHW
 )
 
 target_include_directories(AidleyController

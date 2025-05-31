@@ -13,8 +13,8 @@
 #include "test_i2c.hpp"
 #include "test_bno085.hpp"
 #include "test_bq27441.hpp"
-
-
+#include "test_power_mux.hpp"
+#include "test_radio_receiverHW.hpp"
 bool PeripheralsTestComplete = false;
 
 extern TaskHandle_t test_peripheralsTask_TaskHandle;
@@ -30,6 +30,8 @@ typedef struct {
     bool test_i2c2;
     bool test_BNO085;
     bool test_BQ27441;
+    bool test_power_mux;
+    bool test_radio_receiverHW;
 } TestConfig;
 
 
@@ -51,6 +53,9 @@ void test_peripheralsTask(void *argument)
     if (cfg->test_BMP581) test_bmp581();
     if (cfg->test_BNO085) test_bno085();
     if (cfg->test_BQ27441) test_bq27441(2000);
+    if (cfg->test_power_mux) test_power_mux(VOUT_3V3);
+    if (cfg->test_radio_receiverHW) test_radio_receiverHW();
+    
 
     LOG_INFO("[DRIVER TEST] Peripherals Test Ended");
 

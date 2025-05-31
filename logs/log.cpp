@@ -16,13 +16,20 @@ static void log_output(const char* color_code, const char* level, const char* fo
     printf("\033[0m\n");
 }
 
+static void log_input(const char* color_code, const char* level, const char* format, va_list args)
+{
+    printf("\r%s[%s] ", color_code, level);
+    vprintf(format, args);
+    printf("\033[0m\n");
+}
+
 void log_debug(const char* format, ...)
 {
     if (current_log_level <= LOG_DEBUG)
     {
         va_list args;
         va_start(args, format);
-        log_output("\033[36m", "DEBUG", format, args);
+        log_output("\033[36m", "Aidley >>", format, args);
         va_end(args);
     }
 }
@@ -63,3 +70,15 @@ void log_error(const char* format, ...)
         va_end(args);
     }
 }
+
+void log_cmd(const char* format, ...)
+{
+    if (current_log_level <= LOG_DEBUG)
+    {
+        va_list args;
+        va_start(args, format);
+        log_input("\033[36m", "Aidley >>", format, args);
+        va_end(args);
+    }
+}
+

@@ -24,12 +24,13 @@ void log_debug(const char* format, ...);
 void log_info(const char* format, ...);
 void log_warn(const char* format, ...);
 void log_error(const char* format, ...);
+void log_cmd(const char* format, ...);
 
 #define LOG_DEBUG(...) log_debug(__VA_ARGS__)
 #define LOG_INFO(...)  log_info(__VA_ARGS__)
 #define LOG_WARN(...)  log_warn(__VA_ARGS__)
 #define LOG_ERROR(...) log_error(__VA_ARGS__)
-
+#define LOG_CMD(...) log_error(__VA_ARGS__)
 #ifdef __cplusplus
 }
 #endif
