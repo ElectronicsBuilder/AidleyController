@@ -7,8 +7,10 @@
 #include "main.h"
 
 #include "log.hpp"
+#include "uart.hpp"
 #include "qspi_flash.hpp"
 #include "test_uart.hpp"
+
 
 #include "test_nvram.hpp"
 #include "test_spi_flash.hpp"
@@ -20,11 +22,21 @@ extern "C" {
     }
 
 void heartbeatTask(void *argument);
+void UART_Task(void *argument);
+
 extern bool  qspi_dma_tx_done;
 
 osThreadId_t heartbeatTask_TaskHandle;
 const osThreadAttr_t heartbeatTask_attributes = {
 	.name = "heartbeat TASK",
+	.stack_size = 2048 * 1,
+	.priority = (osPriority_t)osPriorityNormal
+
+};
+
+osThreadId_t UARTTask_TaskHandle;
+const osThreadAttr_t UARTTask_attributes = {
+	.name = "UART TASK",
 	.stack_size = 2048 * 1,
 	.priority = (osPriority_t)osPriorityNormal
 
@@ -51,15 +63,18 @@ void main_cpp(void)
 
  
 
-    HAL_Delay(2000);
+    HAL_Delay(100);
 
 
+
+ 
 
 
     osKernelInitialize();
 
 
     heartbeatTask_TaskHandle            = osThreadNew(heartbeatTask, NULL, &heartbeatTask_attributes);
+    UARTTask_TaskHandle                 = osThreadNew(UART_Task, NULL, &UARTTask_attributes);
     test_peripheralsTask_TaskHandle     = osThreadNew(test_peripheralsTask, NULL, &test_peripheralsTask_attributes);
 
 
@@ -85,7 +100,21 @@ void heartbeatTask(void *argument)
     for (;;) {
   
         osDelay(500);  // Run every ~500 ms
-        HAL_GPIO_TogglePin(GPIOG, LED_HB_Pin);  
+        HAL_GPIO_TogglePin(LED_HB_GPIO_Port, LED_HB_Pin);  
+    
+    }
+}
+
+void UART_Task(void *argument)
+{
+   osDelay(1000);
+   uart_init_rx_dma(); 
+
+
+    for (;;) {
+  
+        osDelay(1);  // Run every ~1 ms
+        uart_dma_poll(); 
     
     }
 }

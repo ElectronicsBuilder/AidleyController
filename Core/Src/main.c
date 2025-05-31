@@ -82,6 +82,8 @@ UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
 UART_HandleTypeDef huart6;
+DMA_HandleTypeDef hdma_usart1_rx;
+DMA_HandleTypeDef hdma_usart1_tx;
 
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -146,7 +148,10 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+ 	__disable_irq();
+	SCB->VTOR = 0x08080000;
+  __DSB();
+	__enable_irq();
   /* USER CODE END 1 */
 
   /* MPU Configuration--------------------------------------------------------*/
@@ -779,9 +784,9 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 1 */
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 0;
+  htim1.Init.Prescaler = 215;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 65535;
+  htim1.Init.Period = 20000;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -806,7 +811,7 @@ static void MX_TIM1_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 0;
+  sConfigOC.Pulse = 1500;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
@@ -816,6 +821,7 @@ static void MX_TIM1_Init(void)
   {
     Error_Handler();
   }
+  sConfigOC.Pulse = 0;
   if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
@@ -1285,6 +1291,12 @@ static void MX_DMA_Init(void)
   __HAL_RCC_DMA2_CLK_ENABLE();
 
   /* DMA interrupt init */
+  /* DMA2_Stream2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
+  /* DMA2_Stream5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream5_IRQn);
   /* DMA2_Stream7_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
@@ -1318,24 +1330,26 @@ static void MX_GPIO_Init(void)
                           |TOF6_LPn_Pin|AUDIO_MODE_Pin|CTP_RESET_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOI, VPWM_D1_Pin|VPWM_D0_Pin|TLM_EN_Pin|TOF3_LPn_Pin
-                          |TOF2_LPn_Pin|TFT_RESET_Pin|TFT_RD_Pin|TFT_DC_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(VPWM_D1_GPIO_Port, VPWM_D1_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, VPWM_STAT_Pin|TLM_IO3_Pin|TLM_IO2_Pin|RADIO_IO1_Pin
-                          |RADIO_IO2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOI, VPWM_D0_Pin|TLM_EN_Pin|TOF3_LPn_Pin|TOF2_LPn_Pin
+                          |TFT_RESET_Pin|TFT_RD_Pin|TFT_DC_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOF, WIFI_PWREN_Pin|WIFI_CS_Pin|WIFI_WAKE_Pin|WIFI_IRQ_Pin
                           |RADIO_IO4_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOH, WIFI_EN_Pin|WIFI_RESET_Pin|TLM_IO4_Pin|TLM_IO5_Pin
-                          |TOF5_En_Pin|TOF5_LPn_Pin|TOF4_En_Pin|TOF4_LPn_Pin
-                          |VSEL_OUT_Pin|TOF3_En_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, TLM_IO3_Pin|TLM_IO2_Pin|RADIO_IO1_Pin|RADIO_IO2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, RADIO_IO3_Pin|RADIO_IO5_Pin|PPM_OEB4_Pin|AUDIO_EN_Pin
+  HAL_GPIO_WritePin(GPIOH, WIFI_EN_Pin|WIFI_RESET_Pin|TLM_IO4_Pin|TLM_IO5_Pin
+                          |TOF5_En_Pin|TOF5_LPn_Pin|TOF4_En_Pin|TOF4_LPn_Pin
+                          |TOF3_En_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, RADIO_IO3_Pin|RADIO_IO5_Pin|PPM_OE_Pin|AUDIO_EN_Pin
                           |AUDIO_GAIN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
@@ -1360,7 +1374,7 @@ static void MX_GPIO_Init(void)
                           |FLASH_WP_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, PPM_OE_Pin|SBUS_OE_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(SBUS_OE_GPIO_Port, SBUS_OE_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : TFT_CS_Pin */
   GPIO_InitStruct.Pin = TFT_CS_Pin;
@@ -1387,14 +1401,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOI, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : VPWM_STAT_Pin TLM_IO3_Pin TLM_IO2_Pin RADIO_IO1_Pin
-                           RADIO_IO2_Pin */
-  GPIO_InitStruct.Pin = VPWM_STAT_Pin|TLM_IO3_Pin|TLM_IO2_Pin|RADIO_IO1_Pin
-                          |RADIO_IO2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  /*Configure GPIO pin : VPWM_STAT_Pin */
+  GPIO_InitStruct.Pin = VPWM_STAT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  HAL_GPIO_Init(VPWM_STAT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : WIFI_PWREN_Pin WIFI_WAKE_Pin WIFI_IRQ_Pin RADIO_IO4_Pin
                            LED_ERROR_Pin LED_COMM_Pin */
@@ -1412,20 +1423,27 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(WIFI_CS_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : TLM_IO3_Pin TLM_IO2_Pin RADIO_IO1_Pin RADIO_IO2_Pin */
+  GPIO_InitStruct.Pin = TLM_IO3_Pin|TLM_IO2_Pin|RADIO_IO1_Pin|RADIO_IO2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
   /*Configure GPIO pins : WIFI_EN_Pin WIFI_RESET_Pin TLM_IO4_Pin TLM_IO5_Pin
                            TOF5_En_Pin TOF5_LPn_Pin TOF4_En_Pin TOF4_LPn_Pin
-                           VSEL_OUT_Pin TOF3_En_Pin */
+                           TOF3_En_Pin */
   GPIO_InitStruct.Pin = WIFI_EN_Pin|WIFI_RESET_Pin|TLM_IO4_Pin|TLM_IO5_Pin
                           |TOF5_En_Pin|TOF5_LPn_Pin|TOF4_En_Pin|TOF4_LPn_Pin
-                          |VSEL_OUT_Pin|TOF3_En_Pin;
+                          |TOF3_En_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : RADIO_IO3_Pin RADIO_IO5_Pin PPM_OEB4_Pin AUDIO_EN_Pin
+  /*Configure GPIO pins : RADIO_IO3_Pin RADIO_IO5_Pin PPM_OE_Pin AUDIO_EN_Pin
                            AUDIO_GAIN_Pin */
-  GPIO_InitStruct.Pin = RADIO_IO3_Pin|RADIO_IO5_Pin|PPM_OEB4_Pin|AUDIO_EN_Pin
+  GPIO_InitStruct.Pin = RADIO_IO3_Pin|RADIO_IO5_Pin|PPM_OE_Pin|AUDIO_EN_Pin
                           |AUDIO_GAIN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -1445,8 +1463,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(TOF6_GPIO_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : TOF5_GPIO_Pin TOF4_GPIO_Pin PSENS_INT_Pin GPOUT_Pin */
-  GPIO_InitStruct.Pin = TOF5_GPIO_Pin|TOF4_GPIO_Pin|PSENS_INT_Pin|GPOUT_Pin;
+  /*Configure GPIO pins : TOF5_GPIO_Pin TOF4_GPIO_Pin PSENS_INT_Pin GPOUT_Pin
+                           VSEL_OUT_Pin */
+  GPIO_InitStruct.Pin = TOF5_GPIO_Pin|TOF4_GPIO_Pin|PSENS_INT_Pin|GPOUT_Pin
+                          |VSEL_OUT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
@@ -1493,12 +1513,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PPM_OE_Pin SBUS_OE_Pin */
-  GPIO_InitStruct.Pin = PPM_OE_Pin|SBUS_OE_Pin;
+  /*Configure GPIO pin : SBUS_OE_Pin */
+  GPIO_InitStruct.Pin = SBUS_OE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  HAL_GPIO_Init(SBUS_OE_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : TOF3_GPIO_Pin TOF2_GPIO_Pin */
   GPIO_InitStruct.Pin = TOF3_GPIO_Pin|TOF2_GPIO_Pin;
