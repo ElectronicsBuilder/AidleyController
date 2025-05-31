@@ -92,15 +92,15 @@ void heartbeatTask(void *argument)
 
 
 
-extern "C" void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef *hqspi)
-{
-    qspi_dma_tx_done = true; // A global or static volatile flag
-}
+// extern "C" void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef *hqspi)
+// {
+//     qspi_dma_tx_done = true; // A global or static volatile flag
+// }
 
-extern "C" void HAL_QSPI_RxCpltCallback(QSPI_HandleTypeDef *hqspi)
-{
-    qspi_dma_tx_done = true;
-}
+// extern "C" void HAL_QSPI_RxCpltCallback(QSPI_HandleTypeDef *hqspi)
+// {
+//     qspi_dma_tx_done = true;
+// }
 
 
 

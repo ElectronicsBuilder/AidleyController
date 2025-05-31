@@ -30,6 +30,7 @@ typedef struct {
     bool test_i2c2;
     bool test_BNO085;
     bool test_BQ27441;
+    bool test_continous_data;
 } TestConfig;
 
 
@@ -51,6 +52,8 @@ void test_peripheralsTask(void *argument)
     if (cfg->test_BMP581) test_bmp581();
     if (cfg->test_BNO085) test_bno085();
     if (cfg->test_BQ27441) test_bq27441(2000);
+   // if  (cfg->test_continous_data) altitude_continous_read();
+
 
     LOG_INFO("[DRIVER TEST] Peripherals Test Ended");
 

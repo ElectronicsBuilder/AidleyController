@@ -520,3 +520,14 @@ uint8_t QspiFlash::getStatus()
 
     return reg;
 }
+
+
+void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef *hqspi)
+{
+    qspi_dma_tx_done = true; // A global or static volatile flag
+}
+
+void HAL_QSPI_RxCpltCallback(QSPI_HandleTypeDef *hqspi)
+{
+    qspi_dma_tx_done = true;
+}
