@@ -32,6 +32,7 @@ typedef struct {
     bool test_BQ27441;
     bool test_power_mux;
     bool test_radio_receiverHW;
+    bool test_continous_data;
 } TestConfig;
 
 
