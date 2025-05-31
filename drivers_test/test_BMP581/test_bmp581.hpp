@@ -7,6 +7,7 @@ extern "C" {
 
 
 void test_bmp581();
+void altitude_continous_read(void);
 
 #ifdef __cplusplus
 }
