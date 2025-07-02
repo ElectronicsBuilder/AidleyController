@@ -33,3 +33,6 @@
 *.DS_Store
 Thumbs.db
 
+# Ignore QSPI flash hash/timestamp
+tools/external_loader/.last_qspi_*
+
