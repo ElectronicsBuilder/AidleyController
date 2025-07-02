@@ -49,6 +49,7 @@ public:
     QFlashDeviceInfo getDeviceInfo();
     bool waitDmaComplete(uint32_t timeout_ms);
     void autoPollingMemReady(uint32_t timeout = HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
+    bool disableMemoryMappedMode();
 
 
 private:

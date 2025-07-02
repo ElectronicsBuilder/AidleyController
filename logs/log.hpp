@@ -8,7 +8,7 @@ extern "C" {
 
 
 #include <stdint.h>
-#include <stdarg.h>   // for va_start, va_end
+#include <stdarg.h> 
 
 typedef enum
 {

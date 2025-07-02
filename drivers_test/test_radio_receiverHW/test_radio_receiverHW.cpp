@@ -22,7 +22,7 @@ void test_radio_receiverHW()
                            SBUS_OE_PORT, SBUS_OE_PIN);
 
     // Enable PPM output to MCU
-    receiver.enablePPM(true);
+    receiver.enablePPM(true); // Active Low
     HAL_Delay(50);
     LOG_INFO("[PPM] PPM Output Enabled: %s", receiver.isPPMEnabled() ? "YES" : "NO");
 

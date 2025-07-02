@@ -7,20 +7,24 @@
 #include "task.h"
 #include "qspi_flash.hpp"
 #include "test_qspi_flash.hpp"
+#include "app_defs.hpp"
+
 
 extern QSPI_HandleTypeDef hqspi;
 extern bool qspi_dma_tx_done;
 
 
-#define QSPI_MEM_BASE_ADDR  ((uint8_t*)0x90000000)
+//#define QSPI_MEM_BASE_ADDR  ((uint8_t*)QSPI_USERDATA_WRITE_ADDR)
 
 
 
 void qspi_flash_self_test()
 {
+     QspiFlash flash(&hqspi);
+     
     uint8_t id[3] = {0};
 
-    QspiFlash flash(&hqspi);
+    //QspiFlash flash(&hqspi);
 
     /* Read and display JEDEC ID */
     flash.readID(id);
@@ -34,7 +38,7 @@ void qspi_flash_self_test()
              info.sector_size,
              info.supports_quad ? "Yes" : "No");
 
-    constexpr uint32_t test_addr = 0x0000;
+    constexpr uint32_t test_addr = QSPI_USERDATA_WRITE_ADDR;
     const char initial_data[] = "QSPI Quad Test OK";
     const char dma_data[] = "QSPI DMA Write Test OK";
     const char memory_mapped_data[] = "QSPI Quad Test Memory Mapped OK";
@@ -101,8 +105,8 @@ void qspi_flash_self_test()
     /* Enable Memory Mapped Quad Read Mode */
     flash.enableQuadMemoryMappedMode();
 
-    /* Direct memory access (assumes 0x90000000 mapped) */
-    const uint8_t* mem_mapped_ptr = reinterpret_cast<const uint8_t*>(0x90000000 + test_addr);
+    /* Direct memory access (assumes QSPI_USERDATA_WRITE_ADDR) */
+    const uint8_t* mem_mapped_ptr = reinterpret_cast<const uint8_t*>(QSPI_USERDATA_ADDR);
     LOG_INFO("[QSPI] Memory-Mapped Read: %s", mem_mapped_ptr);
 
     /* Verify Memory Mapped Read */
@@ -111,4 +115,6 @@ void qspi_flash_self_test()
     }
 
     LOG_INFO("[QSPI] QSPI Flash Quad Write, DMA Write, Read and MemoryMapped Passed");
+
+    flash.disableMemoryMappedMode();
 }

@@ -61,10 +61,13 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 512K
-QUADSPI (r)    : ORIGIN = 0x90000000,  LENGTH = (16M - 1M)
-/*FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 2048K */
-FLASH (rx)      : ORIGIN = 0x8080000, LENGTH = (2048K - 512K)
+  RAM                   (xrw) : ORIGIN = 0x20000000,  LENGTH = 512K
+  QUADSPI               (r)   : ORIGIN = 0x90000000,  LENGTH = (16M - 4M)
+  QUADSPI_USERDATA      (r)   : ORIGIN = 0x90C00000,  LENGTH = 1M
+  QUADSPI_FUSE          (r)   : ORIGIN = 0x90FFF000, LENGTH = 4K
+
+  /*FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 2048K */
+  FLASH                 (rx)      : ORIGIN = 0x8080000, LENGTH = (2048K - 512K)
 }
 
 /* Define output sections */

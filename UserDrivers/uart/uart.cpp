@@ -4,7 +4,7 @@
 #include "log.hpp"
 #include <string.h>
 #include "stm32f7xx_hal.h"
-
+#include "boot_fuse_qspiFlash.hpp"
 
 extern UART_HandleTypeDef huart1;
 
@@ -86,18 +86,26 @@ void uart_handle_log_input(uint8_t byte)
 {
     static char buffer[100];
     static uint32_t pos = 0;
-    //const char* prompt = "\r\n\033[36m[Aidley >>] \033[0m";
+    const char* prompt = "\r\n\033[36m[Aidley >>] \033[0m";
 
     switch (byte)
     {
         case '\r':
         case '\n':
-
             buffer[pos] = '\0';
 
             if (pos > 0) {
+                if (strcmp(buffer, "bootloader") == 0) {
+                    const char* msg = "\r\n[INFO] Jumping to bootloader...\r\n";
+                    HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+                    HAL_Delay(100);
+                    qspiFlash_set_fuse();
+	                NVIC_SystemReset();
+                }
+
                 pos = 0;
             }
+
             HAL_UART_Transmit(&huart1, (uint8_t*)prompt, strlen(prompt), HAL_MAX_DELAY);
             break;
 
@@ -109,12 +117,10 @@ void uart_handle_log_input(uint8_t byte)
                 HAL_UART_Transmit(&huart1, (uint8_t*)"\b \b", 3, HAL_MAX_DELAY);
             }
             break;
-      
 
         default:
             if (pos < sizeof(buffer) - 1 && byte >= 0x20 && byte <= 0x7E) {
                 buffer[pos++] = byte;
-                
                 HAL_UART_Transmit(&huart1, &byte, 1, HAL_MAX_DELAY); // echo typed char
             }
             break;

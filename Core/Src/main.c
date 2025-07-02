@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "app_touchgfx.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -205,6 +206,8 @@ int main(void)
   MX_USART3_UART_Init();
   MX_USART6_UART_Init();
   MX_SPI3_Init();
+  /* Call PreOsInit function */
+  MX_TouchGFX_PreOSInit();
   /* USER CODE BEGIN 2 */
 
   main_cpp(); // jump to C++ app
@@ -648,7 +651,7 @@ static void MX_RNG_Init(void)
   * @param None
   * @retval None
   */
-static void MX_SPI1_Init(void) 
+static void MX_SPI1_Init(void)
 {
 
   /* USER CODE BEGIN SPI1_Init 0 */
@@ -742,7 +745,7 @@ static void MX_SPI6_Init(void)
   hspi6.Instance = SPI6;
   hspi6.Init.Mode = SPI_MODE_MASTER;
   hspi6.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi6.Init.DataSize = SPI_DATASIZE_4BIT;
+  hspi6.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi6.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi6.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi6.Init.NSS = SPI_NSS_SOFT;
@@ -928,7 +931,6 @@ static void MX_TIM3_Init(void)
 
   TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
-  TIM_OC_InitTypeDef sConfigOC = {0};
 
   /* USER CODE BEGIN TIM3_Init 1 */
 
@@ -948,28 +950,15 @@ static void MX_TIM3_Init(void)
   {
     Error_Handler();
   }
-  if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
-  {
-    Error_Handler();
-  }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
   {
     Error_Handler();
   }
-  sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 0;
-  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
-  {
-    Error_Handler();
-  }
   /* USER CODE BEGIN TIM3_Init 2 */
 
   /* USER CODE END TIM3_Init 2 */
-  HAL_TIM_MspPostInit(&htim3);
 
 }
 
@@ -1349,7 +1338,7 @@ static void MX_GPIO_Init(void)
                           |TOF3_En_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, RADIO_IO3_Pin|RADIO_IO5_Pin|PPM_OE_Pin|AUDIO_EN_Pin
+  HAL_GPIO_WritePin(GPIOB, RADIO_IO3_Pin|RADIO_IO5_Pin|BKL_PWM_Pin|AUDIO_EN_Pin
                           |AUDIO_GAIN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
@@ -1375,6 +1364,9 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(SBUS_OE_GPIO_Port, SBUS_OE_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(PPM_OE_GPIO_Port, PPM_OE_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin : TFT_CS_Pin */
   GPIO_InitStruct.Pin = TFT_CS_Pin;
@@ -1441,10 +1433,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : RADIO_IO3_Pin RADIO_IO5_Pin PPM_OE_Pin AUDIO_EN_Pin
-                           AUDIO_GAIN_Pin */
-  GPIO_InitStruct.Pin = RADIO_IO3_Pin|RADIO_IO5_Pin|PPM_OE_Pin|AUDIO_EN_Pin
-                          |AUDIO_GAIN_Pin;
+  /*Configure GPIO pins : RADIO_IO3_Pin RADIO_IO5_Pin PPM_OE_Pin BKL_PWM_Pin
+                           AUDIO_EN_Pin AUDIO_GAIN_Pin */
+  GPIO_InitStruct.Pin = RADIO_IO3_Pin|RADIO_IO5_Pin|PPM_OE_Pin|BKL_PWM_Pin
+                          |AUDIO_EN_Pin|AUDIO_GAIN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

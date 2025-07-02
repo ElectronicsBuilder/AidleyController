@@ -10,21 +10,34 @@
 #include "uart.hpp"
 #include "qspi_flash.hpp"
 #include "test_uart.hpp"
-
+#include "display_driver.hpp"
+#include "app_touchgfx.h"
 
 #include "test_nvram.hpp"
 #include "test_spi_flash.hpp"
 #include "test_peripherals.hpp"
 
-extern volatile bool _intFlag;
-extern "C" {
-    #include "sh2.h"
-    }
+
+ 
+
 
 void heartbeatTask(void *argument);
 void UART_Task(void *argument);
+void GUI_task(void *argument);
+void DISPLAY_task(void *argument);
 
+
+extern volatile bool _intFlag;
+extern "C" {
+    #include "sh2.h"
+    void touchgfx_signalVSyncTimer(void);  // C-linkage for C code
+    }
+
+ extern ST7789 display;
+
+extern bool PeripheralsTestComplete;
 extern bool  qspi_dma_tx_done;
+extern QSPI_HandleTypeDef hqspi;
 
 osThreadId_t heartbeatTask_TaskHandle;
 const osThreadAttr_t heartbeatTask_attributes = {
@@ -45,13 +58,40 @@ const osThreadAttr_t UARTTask_attributes = {
 osThreadId_t test_peripheralsTask_TaskHandle;
 const osThreadAttr_t test_peripheralsTask_attributes = {
 	.name = "Test Peripherals TASK",
-	.stack_size = 2048 * 5,
+	.stack_size = 2048 * 1,
 	.priority = (osPriority_t)osPriorityNormal
 
 };
 
+osThreadId_t GUI_TaskHandle;
+const osThreadAttr_t GUITask_attributes = {
+	.name = "GUI TASK",
+	.stack_size = 2048 * 1,
+	.priority = (osPriority_t)osPriorityNormal
 
-extern bool PeripheralsTestComplete;
+};
+
+osThreadId_t DISPLAY_TaskHandle;
+const osThreadAttr_t DISPLAYTask_attributes = {
+	.name = "DISPLAY TASK",
+	.stack_size = 1024 * 1,
+	.priority = (osPriority_t)osPriorityNormal
+
+};
+
+bool TouchGFX_init = false;
+ int tickCounter;
+ int digitalHours;
+ int digitalMinutes;
+ int digitalSeconds;
+ uint16_t digitalDays;
+
+uint32_t g_tickCounter;
+int g_digitalSeconds;
+
+QspiFlash flash(&hqspi);
+
+
 
 
 
@@ -65,9 +105,7 @@ void main_cpp(void)
 
     HAL_Delay(100);
 
-
-
- 
+    
 
 
     osKernelInitialize();
@@ -77,7 +115,8 @@ void main_cpp(void)
     UARTTask_TaskHandle                 = osThreadNew(UART_Task, NULL, &UARTTask_attributes);
     test_peripheralsTask_TaskHandle     = osThreadNew(test_peripheralsTask, NULL, &test_peripheralsTask_attributes);
 
-
+    GUI_TaskHandle                      = osThreadNew(GUI_task, NULL, &GUITask_attributes);
+    DISPLAY_TaskHandle                  = osThreadNew(DISPLAY_task, NULL, &DISPLAYTask_attributes);
 
     LOG_INFO("About to start FreeRTOS kernel...");
     osKernelStart();
@@ -121,24 +160,53 @@ void UART_Task(void *argument)
 
 
 
-// extern "C" void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef *hqspi)
-// {
-//     qspi_dma_tx_done = true; // A global or static volatile flag
-// }
-
-// extern "C" void HAL_QSPI_RxCpltCallback(QSPI_HandleTypeDef *hqspi)
-// {
-//     qspi_dma_tx_done = true;
-// }
-
-
-
-
-
-extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+void DISPLAY_task(void *argument)
 {
-    if (GPIO_Pin == DOF_INT_Pin)
-    {
-        _intFlag = true;
+    uint32_t tick = 0;
+
+
+
+
+while (!TouchGFX_init || !PeripheralsTestComplete) {
+    osDelay(10);
+}
+   
+    LOG_INFO("[ST7789] Switching Display Driver to TouchGFX");
+    display.init();
+
+    for (;;) {
+        
+       tick++;
+        if (tick >= 16) {
+            touchgfx_signalVSyncTimer();
+            tick = 0;
+        }
+        osDelay(1); 
     }
 }
+
+void GUI_task(void *argument)
+{
+
+    while (!PeripheralsTestComplete) {
+    osDelay(10);
+}
+    
+        flash.enableQuadMemoryMappedMode();   
+
+        MX_TouchGFX_Init();
+	    /* Call PreOsInit function */
+		MX_TouchGFX_PreOSInit();
+        TouchGFX_init = true;
+		MX_TouchGFX_Process();
+    
+   
+    for (;;) {
+      
+
+    }
+}
+
+
+
+

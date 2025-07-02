@@ -521,6 +521,24 @@ uint8_t QspiFlash::getStatus()
     return reg;
 }
 
+bool QspiFlash::disableMemoryMappedMode() {
+    if (!qspiHandle) return false;
+
+    if (HAL_QSPI_Abort(qspiHandle) != HAL_OK) {
+        LOG_ERROR("[QSPI] HAL_QSPI_Abort failed");
+        return false;
+    }
+
+    qspiHandle->Instance->CCR &= ~(QUADSPI_CCR_FMODE);
+
+    while (qspiHandle->Instance->SR & QUADSPI_SR_BUSY) {
+        __NOP();
+    }
+
+    LOG_INFO("[QSPI] MMAP mode disabled and flash ready");
+    return true;
+}
+
 
 void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef *hqspi)
 {

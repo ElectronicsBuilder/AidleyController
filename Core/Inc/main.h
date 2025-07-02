@@ -32,6 +32,7 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "cmsis_os2.h"
+#define STM32F7xx
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

@@ -17,7 +17,7 @@ void RadioReceiver::enableSBUS(bool enable)
 
 bool RadioReceiver::isPPMEnabled() const
 {
-    return HAL_GPIO_ReadPin(_ppmOePort, _ppmOePin) == GPIO_PIN_SET;
+    return HAL_GPIO_ReadPin(_ppmOePort, _ppmOePin) == GPIO_PIN_RESET; // active Low signal
 }
 
 bool RadioReceiver::isSBUSEnabled() const
