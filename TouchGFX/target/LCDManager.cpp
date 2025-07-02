@@ -1,6 +1,6 @@
 
 #include "LCDManager.hpp"
-#include <ST7789.hpp>
+#include <st7789.hpp>
 #include "display_driver.hpp"
 
 extern void LCDManager_TransferComplete();
